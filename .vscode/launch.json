@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:8000",
+      "webRoot": "${workspaceFolder}",
+      "runtimeExecutable": "canary"
+    },
+    {
+      "command": "yarn build && yarn start",
+      "name": "Run yarn build and start",
+      "request": "launch",
+      "type": "node-terminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch snap in chrome and debug in VS code",
+      "stopAll": true,
+      "configurations": [
+        "Launch Chrome",
+        "Run yarn build and start"
+      ],
+      "presentation": {
+        "group": "0_vscode",
+        "order": 1
+      }
+    }
+  ]
+}
