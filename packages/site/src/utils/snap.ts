@@ -1,6 +1,6 @@
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
-
+import { TransactionConstants } from './constants';
 /**
  * Get the installed snaps in MetaMask.
  *
@@ -67,6 +67,26 @@ export const sendHello = async () => {
       defaultSnapOrigin,
       {
         method: 'hello',
+      },
+    ],
+  });
+};
+
+// A function that sends contract transactions
+export const sendContractTransaction = async (data?: string) => {
+  // Get the user's account from MetaMask.
+  const [from] = (await window.ethereum.request({
+    method: 'eth_requestAccounts',
+  })) as string[];
+  // Send a transaction to MetaMask.
+  await window.ethereum.request({
+    method: 'eth_sendTransaction',
+    params: [
+      {
+        from,
+        to: TransactionConstants.Address,
+        value: '0x0',
+        data,
       },
     ],
   });

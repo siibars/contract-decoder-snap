@@ -1,0 +1,103 @@
+version: '3.8'
+services:
+  ganache:
+    restart: unless-stopped
+    image: trufflesuite/ganache:${GANACHE_TAG:-latest}
+    ports:
+      - '8545:8545'
+    healthcheck:
+      test: ['CMD', 'nc', '-v', 'localhost', '8545']
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+    command: >-
+      -a ${GANACHE_ACCOUNT_COUNT-10}
+      -l ${GANACHE_BLOCK_GAS_LIMIT-10000000000}
+      -e ${GANACHE_ACCOUNT_BALANCE-10000000000}
+
+  redis_db:
+    restart: unless-stopped
+    image: 'redis:${REDIS_TAG:-alpine}'
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ['CMD', 'nc', '-v', 'localhost', '6379']
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+    container_name: redis_db
+    command: redis-server
+    volumes:
+      - redis-data:/data
+
+  db:
+    restart: unless-stopped
+    image: postgres:${POSTGRES_TAG:-14}
+    container_name: 'postgres'
+    environment:
+      POSTGRES_PASSWORD: ''
+      POSTGRES_USER: 'postgres'
+      POSTGRES_HOST_AUTH_METHOD: 'trust'
+    ports:
+      - 7432:5432
+    healthcheck:
+      test: ['CMD', 'nc', '-v', 'localhost', '7432']
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+  blockscout:
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      smart-contract-verifier:
+        condition: service_healthy
+      redis_db:
+        condition: service_healthy
+    image: blockscout/blockscout:${BLOCKSCOUT_TAG:-latest}
+    container_name: 'blockscout'
+    links:
+      - db:database
+    command: bash -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    env_file:
+      - ./envs/common-blockscout.env
+    environment:
+      ETHEREUM_JSONRPC_VARIANT: 'ganache'
+      ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:8545/
+      ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:8545/
+      INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER: 'true'
+      INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: 'true'
+      DATABASE_URL: postgresql://postgres:@host.docker.internal:7432/blockscout?ssl=false
+      ECTO_USE_SSL: 'false'
+      SECRET_KEY_BASE: '56NtB48ear7+wMSf0IQuWDAAazhpb31qyc7GiyspBP2vh7t5zlCsF5QDv76chXeN'
+      CHAIN_ID: '1337'
+    ports:
+      - 4000:4000
+    healthcheck:
+      test: ['CMD', 'nc', '-v', 'localhost', '4000']
+      interval: 20s
+      timeout: 5s
+      retries: 15
+      start_period: 5s
+
+    volumes:
+      - logs:/app/logs/
+
+  smart-contract-verifier:
+    restart: unless-stopped
+    image: ghcr.io/blockscout/smart-contract-verifier:${SMART_CONTRACT_VERIFIER_DOCKER_TAG:-latest}
+    container_name: 'smart-contract-verifier'
+    env_file:
+      - ./envs/common-smart-contract-verifier.env
+    ports:
+      - 8043:8043
+
+volumes:
+  redis-data:
+  logs:

@@ -4,14 +4,16 @@ import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
   connectSnap,
   getSnap,
+  sendContractTransaction,
   sendHello,
   shouldDisplayReconnectButton,
 } from '../utils';
+import { TransactionConstants } from '../utils/constants';
 import {
   ConnectButton,
   InstallFlaskButton,
   ReconnectButton,
-  SendHelloButton,
+  SendButton,
 } from './Buttons';
 import { Card } from './Card';
 
@@ -126,6 +128,17 @@ export const Home = () => {
     }
   };
 
+  const handleSendTransactionClick = async () => {
+    try {
+      await sendContractTransaction(
+        TransactionConstants.UpdateWithdrawalAccount,
+      );
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
   return (
     <Container>
       <Heading>
@@ -189,8 +202,20 @@ export const Home = () => {
             description:
               'Display a custom message within a confirmation screen in MetaMask.',
             button: (
-              <SendHelloButton
-                onClick={handleSendHelloClick}
+              <SendButton onClick={handleSendHelloClick} disabled={false} />
+            ),
+          }}
+          disabled={false}
+          fullWidth={false}
+        />
+        <Card
+          content={{
+            title: 'Send a transaction to the network',
+            description:
+              'Sign and send a transaction within a screen in MetaMask.',
+            button: (
+              <SendButton
+                onClick={handleSendTransactionClick}
                 disabled={false}
               />
             ),
@@ -198,6 +223,7 @@ export const Home = () => {
           disabled={false}
           fullWidth={false}
         />
+
         <Notice>
           <p>
             Please note that the <b>snap.manifest.json</b> and{' '}
