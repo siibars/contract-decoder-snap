@@ -2,8 +2,10 @@ import {
   OnRpcRequestHandler,
   OnTransactionHandler,
 } from '@metamask/snap-types';
-import * as mmutils from '@metamask/utils';
-import { FourByteSignature, FOUR_BYTE_API_ENDPOINT } from './utils';
+import { add0x, isHexString } from '@metamask/utils';
+import { decode } from '@metamask/abi-utils';
+
+import { getFunctionSignatureDetails } from './utils';
 /**
  * Get a message from the origin. For demonstration purposes only.
  *
@@ -52,37 +54,36 @@ export const onTransaction: OnTransactionHandler = async ({
     throw Error('transaction or chainId cant be null');
   }
 
-  if (!mmutils.isHexString(transaction.data)) {
+  if (!isHexString(transaction.data)) {
     throw Error('transaction data is not a valid hex string');
   }
-  const hexSignature = transaction.data.slice(0, 10);
-  const fourByteSignatureResponse = await fetch(
-    `${FOUR_BYTE_API_ENDPOINT}${hexSignature}`,
-    {
-      method: 'get',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  );
 
-  if (!fourByteSignatureResponse.ok) {
-    throw Error(
-      `hex signature response is not ok for this signature : ${hexSignature}, status: ${fourByteSignatureResponse.status} `,
-    );
+  const functionSelector = transaction.data.slice(0, 10);
+  const functionSignature = await getFunctionSignatureDetails(functionSelector);
+
+  // ex : "text_signature": "updateWithdrawalAccount(address[],bool)"
+  const parametersTypes = functionSignature.text_signature
+    .slice(
+      functionSignature.text_signature.indexOf('(') + 1,
+      functionSignature.text_signature.indexOf(')'),
+    )
+    .split(',');
+
+  try {
+    decode(parametersTypes, add0x(functionSelector));
+    // console.warn(
+    //   `!!!!! decodedParams : ${normalizeAbiValue(decodedParams)?.toString()}`,
+    // );
+  } catch (error) {
+    console.error(error);
   }
-  // to do : get proper insights somewhere
-  // ex : https://www.4byte.directory/api/v1/signatures/?format=api&hex_signature=0x83ade3dc
-  const { results } = (await fourByteSignatureResponse.json()) as {
-    results: FourByteSignature[];
-  };
 
   return {
     insights: {
       transaction,
       chainId,
       transactionData: {
-        ...results,
+        ...functionSignature,
       },
     },
   };

@@ -3270,6 +3270,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@metamask/abi-utils@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@metamask/abi-utils@npm:1.1.0"
+  dependencies:
+    "@metamask/utils": ^3.2.0
+    superstruct: ^0.16.5
+  checksum: 9b199a856b4fc5ee034cc64f776977f2d38eae78c5f08c6a485d2479c9230ec40bd0e3e299e924acdf0dffa6cafe50921e4b43a2319cbc0a25bdc95aed316645
+  languageName: node
+  linkType: hard
+
 "@metamask/auto-changelog@npm:^2.6.0":
   version: 2.6.1
   resolution: "@metamask/auto-changelog@npm:2.6.1"
@@ -16070,6 +16080,7 @@ __metadata:
   resolution: "snap@workspace:packages/snap"
   dependencies:
     "@lavamoat/allow-scripts": ^2.0.3
+    "@metamask/abi-utils": ^1.1.0
     "@metamask/auto-changelog": ^2.6.0
     "@metamask/eslint-config": ^10.0.0
     "@metamask/eslint-config-jest": ^10.0.0
