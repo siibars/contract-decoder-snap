@@ -2,10 +2,9 @@ import {
   OnRpcRequestHandler,
   OnTransactionHandler,
 } from '@metamask/snap-types';
-import { add0x, isHexString } from '@metamask/utils';
-import { decode } from '@metamask/abi-utils';
+import { isHexString } from '@metamask/utils';
+import { getFunctionInsights } from './utils';
 
-import { getFunctionSignatureDetails } from './utils';
 /**
  * Get a message from the origin. For demonstration purposes only.
  *
@@ -57,34 +56,11 @@ export const onTransaction: OnTransactionHandler = async ({
   if (!isHexString(transaction.data)) {
     throw Error('transaction data is not a valid hex string');
   }
-
-  const functionSelector = transaction.data.slice(0, 10);
-  const functionSignature = await getFunctionSignatureDetails(functionSelector);
-
-  // ex : "text_signature": "updateWithdrawalAccount(address[],bool)"
-  const parametersTypes = functionSignature.text_signature
-    .slice(
-      functionSignature.text_signature.indexOf('(') + 1,
-      functionSignature.text_signature.indexOf(')'),
-    )
-    .split(',');
-
-  try {
-    decode(parametersTypes, add0x(functionSelector));
-    // console.warn(
-    //   `!!!!! decodedParams : ${normalizeAbiValue(decodedParams)?.toString()}`,
-    // );
-  } catch (error) {
-    console.error(error);
-  }
-
+  const functionInsights = await getFunctionInsights(transaction.data);
   return {
     insights: {
-      transaction,
       chainId,
-      transactionData: {
-        ...functionSignature,
-      },
+      // function: functionInsights.function,
     },
   };
 };

@@ -1,4 +1,5 @@
-import { bytesToHex, Json } from '@metamask/utils';
+import { decode } from '@metamask/abi-utils';
+import { add0x, bytesToHex, Json, remove0x } from '@metamask/utils';
 
 // The API endpoint to get a list of functions by 4 byte signature.
 export const FOUR_BYTE_API_ENDPOINT =
@@ -21,9 +22,9 @@ export type FourByteSignature = {
  * @param value - The value to convert.
  * @returns The converted value.
  */
-export function normalizeAbiValue(value: unknown): Json {
+export function normalizeValue(value: unknown): Json {
   if (Array.isArray(value)) {
-    return value.map(normalizeAbiValue);
+    return value.map(normalizeValue);
   }
 
   if (value instanceof Uint8Array) {
@@ -78,3 +79,41 @@ export async function getFunctionSignatureDetails(
   }
   return result;
 }
+
+export const getFunctionInsights = async (transactionData: string) => {
+  const data = remove0x(transactionData);
+
+  const functionSelector = data.slice(0, 8);
+  const functionSignature = await getFunctionSignatureDetails(
+    add0x(functionSelector),
+  );
+
+  // ex : "text_signature": "updateWithdrawalAccount(address[],bool)"
+  const parametersTypes = functionSignature.text_signature
+    .slice(
+      functionSignature.text_signature.indexOf('(') + 1,
+      functionSignature.text_signature.indexOf(')'),
+    )
+    .split(',');
+  parametersTypes.map(console.warn);
+
+  const decodedParams = decode(
+    parametersTypes,
+    add0x(functionSelector.slice(8)),
+  );
+  decodedParams.map(console.warn);
+  if (parametersTypes.length !== decodedParams.length) {
+    throw Error(
+      `Parameters types list doesn't match with the decoded parameters list `,
+    );
+  }
+
+  // parametersTypes.map((value, iterator) => {
+  //   return console.warn(`${value}:${decodedParams[iterator]}`);
+  //   // return [value, decodedParams[iterator]];
+  // });
+  return {
+    function: functionSignature.text_signature,
+    parameters: decodedParams.map(normalizeValue),
+  };
+};
