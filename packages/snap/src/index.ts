@@ -56,11 +56,14 @@ export const onTransaction: OnTransactionHandler = async ({
   if (!isHexString(transaction.data)) {
     throw Error('transaction data is not a valid hex string');
   }
-  const functionInsights = await getFunctionInsights(transaction.data);
+
+  const { transactionFunction, transactionParameters } = await getFunctionInsights(transaction.data);
+  
   return {
     insights: {
       chainId,
-      // function: functionInsights.function,
+      transactionFunction,
+      ...transactionParameters
     },
   };
 };

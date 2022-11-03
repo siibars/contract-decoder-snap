@@ -83,9 +83,8 @@ export async function getFunctionSignatureDetails(
 export const getFunctionInsights = async (transactionData: string) => {
   const data = remove0x(transactionData);
 
-  const functionSelector = data.slice(0, 8);
   const functionSignature = await getFunctionSignatureDetails(
-    add0x(functionSelector),
+    add0x(data.slice(0, 8)),
   );
 
   // ex : "text_signature": "updateWithdrawalAccount(address[],bool)"
@@ -95,25 +94,25 @@ export const getFunctionInsights = async (transactionData: string) => {
       functionSignature.text_signature.indexOf(')'),
     )
     .split(',');
-  parametersTypes.map(console.warn);
 
-  const decodedParams = decode(
-    parametersTypes,
-    add0x(functionSelector.slice(8)),
-  );
-  decodedParams.map(console.warn);
+  const decodedParams = decode(parametersTypes, add0x(data.slice(8)));
+
   if (parametersTypes.length !== decodedParams.length) {
     throw Error(
       `Parameters types list doesn't match with the decoded parameters list `,
     );
   }
 
-  // parametersTypes.map((value, iterator) => {
-  //   return console.warn(`${value}:${decodedParams[iterator]}`);
-  //   // return [value, decodedParams[iterator]];
-  // });
+  const transactionParameters = parametersTypes.map(
+    (type, index) =>
+      <{ parameterType: string; parameterValue: string }>{
+        parameterType: type,
+        parameterValue: normalizeValue(decodedParams[index]),
+      },
+  );
+
   return {
-    function: functionSignature.text_signature,
-    parameters: decodedParams.map(normalizeValue),
+    transactionFunction: functionSignature.text_signature,
+    transactionParameters
   };
 };

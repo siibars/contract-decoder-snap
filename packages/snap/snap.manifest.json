@@ -4,10 +4,10 @@
   "proposedName": "Insights",
   "repository": {
     "type": "git",
-    "url": "https://github.com/siibars/contract-decoder-snap"
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "yLA1ilN9FcZJyFflCcDRjxqDQzj2THLSFt8NCiuBK30=",
+    "shasum": "lYrQj1qikhCEYaJ0cUAbgInFVx0DUK0wm5vg21b5ooc=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
